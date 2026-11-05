@@ -28,102 +28,30 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.katalogmatakuliah.data.CourseRepository
+import com.example.katalogmatakuliah.ui.state.FormUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormScreen(
-    courseId: Int?,
-    onBackClick: () -> Unit,
-    onSaveSuccess: () -> Unit
+    uiState: FormUiState,
+    onCodeChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
+    onSksChange: (String) -> Unit,
+    onSemesterChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onSaveClick: () -> Unit,
+    onBackClick: () -> Unit
 ) {
-    val existingCourse = remember(courseId) {
-        courseId?.let { CourseRepository.getCourseById(it) }
-    }
-
-    val isEditMode = courseId != null
-
-    var code by remember { mutableStateOf(existingCourse?.code ?: "") }
-    var name by remember { mutableStateOf(existingCourse?.name ?: "") }
-    var sksText by remember { mutableStateOf(existingCourse?.sks?.toString() ?: "3") }
-    var semesterText by remember { mutableStateOf(existingCourse?.semester?.toString() ?: "1") }
-    var description by remember { mutableStateOf(existingCourse?.description ?: "") }
-
-    var codeError by remember { mutableStateOf<String?>(null) }
-    var nameError by remember { mutableStateOf<String?>(null) }
-    var sksError by remember { mutableStateOf<String?>(null) }
-    var semesterError by remember { mutableStateOf<String?>(null) }
-
-    fun validateAndSave() {
-        var isValid = true
-
-        if (code.isBlank()) {
-            codeError = "Kode mata kuliah tidak boleh kosong"
-            isValid = false
-        } else {
-            codeError = null
-        }
-
-        if (name.isBlank()) {
-            nameError = "Nama mata kuliah tidak boleh kosong"
-            isValid = false
-        } else {
-            nameError = null
-        }
-
-        val sksVal = sksText.toIntOrNull()
-        if (sksVal == null || sksVal <= 0) {
-            sksError = "SKS harus angka positif (>0)"
-            isValid = false
-        } else {
-            sksError = null
-        }
-
-        val semVal = semesterText.toIntOrNull()
-        if (semVal == null || semVal <= 0) {
-            semesterError = "Semester harus angka positif (>0)"
-            isValid = false
-        } else {
-            semesterError = null
-        }
-
-        if (isValid && sksVal != null && semVal != null) {
-            if (courseId != null) {
-                CourseRepository.updateCourse(
-                    id = courseId,
-                    code = code,
-                    name = name,
-                    sks = sksVal,
-                    semester = semVal,
-                    description = description
-                )
-            } else {
-                CourseRepository.addCourse(
-                    code = code,
-                    name = name,
-                    sks = sksVal,
-                    semester = semVal,
-                    description = description
-                )
-            }
-            onSaveSuccess()
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = if (isEditMode) "Edit Mata Kuliah" else "Tambah Mata Kuliah",
+                        text = if (uiState.isEditMode) "Edit Mata Kuliah" else "Tambah Mata Kuliah",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -154,15 +82,12 @@ fun FormScreen(
         ) {
             // Field Kode Mata Kuliah
             OutlinedTextField(
-                value = code,
-                onValueChange = {
-                    code = it
-                    if (codeError != null) codeError = null
-                },
+                value = uiState.code,
+                onValueChange = onCodeChange,
                 label = { Text("Kode Mata Kuliah") },
                 placeholder = { Text("Contoh: IF-401") },
-                isError = codeError != null,
-                supportingText = codeError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                isError = uiState.codeError != null,
+                supportingText = uiState.codeError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
@@ -171,15 +96,12 @@ fun FormScreen(
 
             // Field Nama Mata Kuliah
             OutlinedTextField(
-                value = name,
-                onValueChange = {
-                    name = it
-                    if (nameError != null) nameError = null
-                },
+                value = uiState.name,
+                onValueChange = onNameChange,
                 label = { Text("Nama Mata Kuliah") },
                 placeholder = { Text("Contoh: Pemrograman Bergerak") },
-                isError = nameError != null,
-                supportingText = nameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                isError = uiState.nameError != null,
+                supportingText = uiState.nameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
@@ -192,14 +114,11 @@ fun FormScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedTextField(
-                    value = sksText,
-                    onValueChange = {
-                        sksText = it
-                        if (sksError != null) sksError = null
-                    },
+                    value = uiState.sksText,
+                    onValueChange = onSksChange,
                     label = { Text("Jumlah SKS") },
-                    isError = sksError != null,
-                    supportingText = sksError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    isError = uiState.sksError != null,
+                    supportingText = uiState.sksError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.weight(1f),
@@ -208,14 +127,11 @@ fun FormScreen(
                 )
 
                 OutlinedTextField(
-                    value = semesterText,
-                    onValueChange = {
-                        semesterText = it
-                        if (semesterError != null) semesterError = null
-                    },
+                    value = uiState.semesterText,
+                    onValueChange = onSemesterChange,
                     label = { Text("Semester") },
-                    isError = semesterError != null,
-                    supportingText = semesterError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    isError = uiState.semesterError != null,
+                    supportingText = uiState.semesterError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.weight(1f),
@@ -226,8 +142,8 @@ fun FormScreen(
 
             // Field Deskripsi
             OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
+                value = uiState.description,
+                onValueChange = onDescriptionChange,
                 label = { Text("Deskripsi Singkat") },
                 placeholder = { Text("Penjelasan singkat materi mata kuliah...") },
                 minLines = 3,
@@ -253,7 +169,7 @@ fun FormScreen(
                 }
 
                 Button(
-                    onClick = { validateAndSave() },
+                    onClick = onSaveClick,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
