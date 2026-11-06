@@ -17,13 +17,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,16 +41,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.katalogmatakuliah.data.Course
-import com.example.katalogmatakuliah.data.CourseRepository
+import com.example.katalogmatakuliah.ui.state.HomeUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    uiState: HomeUiState,
+    onSearchQueryChange: (String) -> Unit,
     onCourseClick: (Int) -> Unit,
     onAddCourseClick: () -> Unit
 ) {
-    val courses = CourseRepository.getCourses()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -87,23 +93,102 @@ fun HomeScreen(
             item {
                 StudentHeaderCard()
                 Spacer(modifier = Modifier.height(12.dp))
+
+                // Search Bar Field
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    placeholder = { Text("Cari mata kuliah atau kode...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    trailingIcon = {
+                        if (uiState.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { onSearchQueryChange("") }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Hapus pencarian",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Daftar Mata Kuliah (${courses.size})",
+                    text = "Daftar Mata Kuliah (${uiState.courses.size})",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
                 )
             }
 
-            // Items Daftar Mata Kuliah
-            items(
-                items = courses,
-                key = { it.id }
-            ) { course ->
-                CourseItemCard(
-                    course = course,
-                    onClick = { onCourseClick(course.id) }
-                )
+            // Handling Empty State (Non-happy path)
+            if (uiState.isEmpty) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SearchOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .height(48.dp)
+                                    .width(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Mata Kuliah Tidak Ditemukan",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tidak ada mata kuliah yang cocok dengan kata kunci \"${uiState.searchQuery}\".",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Items Daftar Mata Kuliah
+                items(
+                    items = uiState.courses,
+                    key = { it.id }
+                ) { course ->
+                    CourseItemCard(
+                        course = course,
+                        onClick = { onCourseClick(course.id) }
+                    )
+                }
             }
         }
     }

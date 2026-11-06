@@ -34,16 +34,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.katalogmatakuliah.data.CourseRepository
+import com.example.katalogmatakuliah.ui.state.DetailUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    courseId: Int,
+    uiState: DetailUiState,
     onBackClick: () -> Unit,
     onEditClick: (Int) -> Unit
 ) {
-    val course = CourseRepository.getCourseById(courseId)
+    val course = uiState.course
 
     Scaffold(
         topBar = {
@@ -71,8 +71,8 @@ fun DetailScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        if (course == null) {
-            // Tampilan saat ID tidak ditemukan
+        if (uiState.isNotFound || course == null) {
+            // Tampilan saat ID tidak ditemukan (Non-happy path)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -97,7 +97,7 @@ fun DetailScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Data mata kuliah dengan ID #$courseId tidak ditemukan di katalog.",
+                    text = "Data mata kuliah tidak ditemukan di katalog.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
