@@ -18,9 +18,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,7 +51,9 @@ fun HomeScreen(
     uiState: HomeUiState,
     onSearchQueryChange: (String) -> Unit,
     onCourseClick: (Int) -> Unit,
-    onAddCourseClick: () -> Unit
+    onDeleteCourseClick: (Int) -> Unit,
+    onAddCourseClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -62,6 +66,15 @@ fun HomeScreen(
                         ),
                         color = MaterialTheme.colorScheme.onBackground
                     )
+                },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Pengaturan",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -86,7 +99,12 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                top = 16.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 88.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Header Info Mahasiswa
@@ -129,12 +147,18 @@ fun HomeScreen(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Daftar Mata Kuliah (${uiState.courses.size})",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Daftar Mata Kuliah (${uiState.courses.size})",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+                    )
+                }
             }
 
             // Handling Empty State (Non-happy path)
@@ -171,7 +195,11 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Tidak ada mata kuliah yang cocok dengan kata kunci \"${uiState.searchQuery}\".",
+                                text = if (uiState.searchQuery.isNotEmpty()) {
+                                    "Tidak ada mata kuliah yang cocok dengan kata kunci \"${uiState.searchQuery}\"."
+                                } else {
+                                    "Belum ada data mata kuliah yang tersimpan di database."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -186,7 +214,8 @@ fun HomeScreen(
                 ) { course ->
                     CourseItemCard(
                         course = course,
-                        onClick = { onCourseClick(course.id) }
+                        onClick = { onCourseClick(course.id) },
+                        onDelete = { onDeleteCourseClick(course.id) }
                     )
                 }
             }
@@ -254,7 +283,8 @@ private fun StudentHeaderCard() {
 @Composable
 private fun CourseItemCard(
     course: Course,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -312,6 +342,14 @@ private fun CourseItemCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Hapus Mata Kuliah",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

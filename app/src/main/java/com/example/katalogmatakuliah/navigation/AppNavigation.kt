@@ -15,9 +15,11 @@ import androidx.navigation.toRoute
 import com.example.katalogmatakuliah.ui.screens.DetailScreen
 import com.example.katalogmatakuliah.ui.screens.FormScreen
 import com.example.katalogmatakuliah.ui.screens.HomeScreen
+import com.example.katalogmatakuliah.ui.screens.SettingsScreen
 import com.example.katalogmatakuliah.ui.viewmodel.DetailViewModel
 import com.example.katalogmatakuliah.ui.viewmodel.FormViewModel
 import com.example.katalogmatakuliah.ui.viewmodel.HomeViewModel
+import com.example.katalogmatakuliah.ui.viewmodel.SettingsViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,6 +30,9 @@ data class DetailRoute(val courseId: Int)
 
 @Serializable
 data class FormRoute(val courseId: Int? = null)
+
+@Serializable
+object SettingsRoute
 
 @Composable
 fun AppNavHost(
@@ -41,18 +46,20 @@ fun AppNavHost(
             val viewModel: HomeViewModel = viewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-                viewModel.loadCourses()
-            }
-
             HomeScreen(
                 uiState = uiState,
                 onSearchQueryChange = viewModel::onSearchQueryChanged,
                 onCourseClick = { courseId ->
                     navController.navigate(DetailRoute(courseId))
                 },
+                onDeleteCourseClick = { courseId ->
+                    viewModel.deleteCourse(courseId)
+                },
                 onAddCourseClick = {
                     navController.navigate(FormRoute(courseId = null))
+                },
+                onSettingsClick = {
+                    navController.navigate(SettingsRoute)
                 }
             )
         }
@@ -73,6 +80,11 @@ fun AppNavHost(
                 },
                 onEditClick = { courseId ->
                     navController.navigate(FormRoute(courseId = courseId))
+                },
+                onDeleteClick = { courseId ->
+                    viewModel.deleteCourse(courseId) {
+                        navController.popBackStack()
+                    }
                 }
             )
         }
@@ -103,6 +115,20 @@ fun AppNavHost(
                 onSaveClick = {
                     viewModel.saveCourse()
                 },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable<SettingsRoute> {
+            val viewModel: SettingsViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            SettingsScreen(
+                uiState = uiState,
+                onDarkModeChange = viewModel::setDarkMode,
+                onSortOrderChange = viewModel::setSortOrder,
                 onBackClick = {
                     navController.popBackStack()
                 }

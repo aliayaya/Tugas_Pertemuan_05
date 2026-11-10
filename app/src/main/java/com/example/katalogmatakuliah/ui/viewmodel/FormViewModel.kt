@@ -1,18 +1,25 @@
 package com.example.katalogmatakuliah.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.katalogmatakuliah.data.CourseRepository
 import com.example.katalogmatakuliah.ui.state.FormUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class FormViewModel : ViewModel() {
+class FormViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(FormUiState())
     val uiState: StateFlow<FormUiState> = _uiState.asStateFlow()
 
     private var isInitialized = false
     private var initializedForId: Int? = null
+
+    init {
+        CourseRepository.initialize(application)
+    }
 
     fun initForm(courseId: Int?) {
         if (isInitialized && (initializedForId == courseId)) return
@@ -21,19 +28,26 @@ class FormViewModel : ViewModel() {
         initializedForId = courseId
 
         if (courseId != null) {
-            val existing = CourseRepository.getCourseById(courseId)
-            if (existing != null) {
-                _uiState.value = FormUiState(
-                    courseId = courseId,
-                    isEditMode = true,
-                    code = existing.code,
-                    name = existing.name,
-                    sksText = existing.sks.toString(),
-                    semesterText = existing.semester.toString(),
-                    description = existing.description,
-                )
-                return
+            viewModelScope.launch {
+                val existing = CourseRepository.getCourseById(courseId)
+                if (existing != null) {
+                    _uiState.value = FormUiState(
+                        courseId = courseId,
+                        isEditMode = true,
+                        code = existing.code,
+                        name = existing.name,
+                        sksText = existing.sks.toString(),
+                        semesterText = existing.semester.toString(),
+                        description = existing.description,
+                    )
+                } else {
+                    _uiState.value = FormUiState(
+                        courseId = null,
+                        isEditMode = false,
+                    )
+                }
             }
+            return
         }
 
         _uiState.value = FormUiState(
@@ -115,26 +129,28 @@ class FormViewModel : ViewModel() {
         }
 
         if ((sksVal != null) && (semVal != null)) {
-            if (state.isEditMode && state.courseId != null) {
-                CourseRepository.updateCourse(
-                    id = state.courseId,
-                    code = state.code,
-                    name = state.name,
-                    sks = sksVal,
-                    semester = semVal,
-                    description = state.description
-                )
-            } else {
-                CourseRepository.addCourse(
-                    code = state.code,
-                    name = state.name,
-                    sks = sksVal,
-                    semester = semVal,
-                    description = state.description
-                )
+            viewModelScope.launch {
+                if (state.isEditMode && state.courseId != null) {
+                    CourseRepository.updateCourse(
+                        id = state.courseId,
+                        code = state.code,
+                        name = state.name,
+                        sks = sksVal,
+                        semester = semVal,
+                        description = state.description
+                    )
+                } else {
+                    CourseRepository.addCourse(
+                        code = state.code,
+                        name = state.name,
+                        sks = sksVal,
+                        semester = semVal,
+                        description = state.description
+                    )
+                }
+                isInitialized = false
+                _uiState.value = state.copy(isSaveSuccess = true)
             }
-            isInitialized = false
-            _uiState.value = state.copy(isSaveSuccess = true)
             return true
         }
 

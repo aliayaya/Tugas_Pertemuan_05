@@ -1,46 +1,67 @@
 package com.example.katalogmatakuliah.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import com.example.katalogmatakuliah.data.Course
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.katalogmatakuliah.data.CourseRepository
+import com.example.katalogmatakuliah.datastore.SortOrder
+import com.example.katalogmatakuliah.datastore.UserPreferencesRepository
 import com.example.katalogmatakuliah.ui.state.HomeUiState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
+    private val userPreferencesRepository = UserPreferencesRepository.getInstance(application)
+    private val searchQueryFlow = MutableStateFlow("")
 
     init {
-        loadCourses()
+        CourseRepository.initialize(application)
     }
 
-    fun loadCourses() {
-        val allCourses = CourseRepository.getCourses()
-        val query = _uiState.value.searchQuery
-        filterCourses(allCourses, query)
-    }
-
-    fun onSearchQueryChanged(query: String) {
-        val allCourses = CourseRepository.getCourses()
-        filterCourses(allCourses, query)
-    }
-
-    private fun filterCourses(allCourses: List<Course>, query: String) {
+    val uiState: StateFlow<HomeUiState> = combine(
+        CourseRepository.getCoursesFlow(),
+        searchQueryFlow,
+        userPreferencesRepository.sortOrderFlow
+    ) { courses, query, sortOrder ->
         val filtered = if (query.isBlank()) {
-            allCourses
+            courses
         } else {
-            allCourses.filter { course ->
+            courses.filter { course ->
                 course.name.contains(query, ignoreCase = true) ||
                         course.code.contains(query, ignoreCase = true)
             }
         }
-        _uiState.value = HomeUiState(
-            courses = filtered,
+
+        val sorted = when (sortOrder) {
+            SortOrder.BY_NAME -> filtered.sortedBy { it.name }
+            SortOrder.BY_CODE -> filtered.sortedBy { it.code }
+            SortOrder.BY_SEMESTER -> filtered.sortedBy { it.semester }
+        }
+
+        HomeUiState(
+            courses = sorted,
             searchQuery = query,
-            isEmpty = filtered.isEmpty(),
-            totalCount = allCourses.size,
+            sortOrder = sortOrder,
+            isEmpty = sorted.isEmpty(),
+            totalCount = courses.size
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState()
+    )
+
+    fun onSearchQueryChanged(query: String) {
+        searchQueryFlow.value = query
+    }
+
+    fun deleteCourse(courseId: Int) {
+        viewModelScope.launch {
+            CourseRepository.deleteCourse(courseId)
+        }
     }
 }
