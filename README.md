@@ -25,7 +25,7 @@ Aplikasi Android sederhana berbasis Kotlin dan Jetpack Compose untuk mengelola k
    - Penanganan kondisi jika ID mata kuliah tidak ditemukan.
 
 3. **Form Tambah & Edit Mata Kuliah**
-   - Form serbaguna untuk menambahkan mata kuliah baru maupun memperbarui mata kuliah yang sudah ada.
+   - Form serbagunad untuk menambahkan mataa kuliah baru maupun memperbaruif mata kuliah yang sudaha ada.
    - Fitur validasi input (kode dan nama wajib diisi, SKS dan semester harus berupa angka positif).
    - Menyediakan tombol Simpan dan Batal.
 
