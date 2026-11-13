@@ -1,6 +1,6 @@
 # Katalog Mata Kuliah
 
-Aplikasi Android berbasis Kotlin dan Jetpack Compose untuk mengelola katalog data mata kuliah program studi Informatika. Aplikasi ini dirancang menggunakan arsitektur MVVM (Model-View-ViewModel) dengan Unidirectional Data Flow (UDF) dan StateFlow untuk Tugas Pertemuan 6 Pemrograman Bergerak.
+Aplikasi Android berbasis Kotlin dan Jetpack Compose untuk mengelola katalog data mata kuliah program studi Informatika. Aplikasi ini dirancang menggunakan arsitektur MVVM (Model-View-ViewModel) dengan Unidirectional Data Flow (UDF) dan StateFlow untuk Tugas Pertemuan 7 (Milestone Hari ke-6).
 
 ## Identitas Mahasiswa
 
@@ -22,7 +22,7 @@ Aplikasi Android berbasis Kotlin dan Jetpack Compose untuk mengelola katalog dat
 
 2. **Detail Mata Kuliah**
    - Menampilkan rincian lengkap mata kuliah berdasarkan ID yang dipilih dari route.
-   - Menyediakan tombol untuk mengedit data.
+   - Menyediakan tombol untuk mengedit dan menghapus data.
    - Penanganan *non-happy path* jika ID mata kuliah tidak ditemukan.
 
 3. **Form Tambah & Edit Mata Kuliah**
@@ -31,17 +31,22 @@ Aplikasi Android berbasis Kotlin dan Jetpack Compose untuk mengelola katalog dat
    - Validasi input (kode dan nama wajib diisi, SKS dan semester harus berupa angka positif).
    - Menyediakan tombol Simpan dan Batal.
 
+4. **Pengaturan Aplikasi (Settings & Preferences)**
+   - **Mode Gelap (Dark Mode)**: Pengaturan tema aplikasi yang tersimpan secara persisten menggunakan DataStore Preferences.
+   - **Pengurutan Mata Kuliah (Sort Order)**: Opsi pengurutan berdasarkan Nama, Kode, atau Semester yang memengaruhi urutan daftar mata kuliah secara dinamis dan persisten.
+
 ---
 
 ## Arsitektur & Teknologi
 
 - **Bahasa**: Kotlin
-- **UI Toolkit**: Jetpack Compose & Material 3 (Tema Dark Slate)
+- **UI Toolkit**: Jetpack Compose & Material 3 (Dynamic Theme)
 - **Arsitektur**: MVVM + Unidirectional Data Flow (UDF)
 - **State Management**: `StateFlow` (`asStateFlow()`) & `collectAsStateWithLifecycle()`
-- **State Holders**: `HomeViewModel`, `DetailViewModel`, `FormViewModel`
+- **State Holders**: `HomeViewModel`, `DetailViewModel`, `FormViewModel`, `SettingsViewModel`
 - **Navigasi**: Navigation Compose dengan Type-Safe Routes (`kotlinx.serialization`)
-- **Penyimpanan Data**: In-Memory Storage (`CourseRepository`)
+- **Penyimpanan Lokal (Database)**: Room Database (`CourseEntity`, `CourseDao`, `CourseDatabase`, `CourseRepository`) dengan KSP
+- **Penyimpanan Preferensi**: Jetpack DataStore Preferences (`UserPreferencesRepository`)
 
 ---
 
